@@ -7,6 +7,10 @@ import { HANDLE_POLICIES, Network } from '@koralabs/kora-labs-common'
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 const NETWORK = (process.env.NETWORK ?? 'preview').toLowerCase() as Network
 export const handlesPolicy = helios.MintingPolicyHash.fromHex(HANDLE_POLICIES.getActivePolicy(NETWORK) ?? '');
+let utxoIndex = 0
+export const getNewFakeUtxoId = () => {
+    return `0000000000000000000000000000000000000000000000000000000000000001#${utxoIndex++}`
+};
 
 export const getKeyFromSeedPhrase = async (seed: string[], derivation = 0): Promise<bip32.PrivateKey> => {
     const entropy = mnemonicToEntropy(seed.join(' '));
@@ -15,8 +19,8 @@ export const getKeyFromSeedPhrase = async (seed: string[], derivation = 0): Prom
     return rootKey.derive(2147483648 + 1852).derive(2147483648 + 1815).derive(2147483648 + 0).derive(0).derive(derivation).toPrivateKey();
 }
 
-export const getAddressAtDerivation = async (seed: string[], derivation: number = 0) => {
-    return helios.Address.fromHash(new helios.PubKeyHash([...(await getKeyFromSeedPhrase(seed, derivation)).toPublicKey().hash()])).toBech32();
+export const getAddressAtDerivation = async (derivation: number = 0) => {
+    return helios.Address.fromHash(new helios.PubKeyHash([...(await getKeyFromSeedPhrase(testSeedPhrase, derivation)).toPublicKey().hash()]));
 }
 
 export const testSeedPhrase = ['hurdle', 'exile', 'essence', 'fitness', 'winter', 'unaware', 'coil', 'polar', 'vocal', 'like', 'tuition', 'story', 'consider', 'weasel', 'shove', 'donkey', 'effort', 'nice', 'any', 'buffalo', 'trip', 'amount', 'hundred', 'duty'];
@@ -28,15 +32,7 @@ export class Fixtures {
     signatories?: helios.PubKeyHash[];
     minted?: [helios.ByteArray | helios.ByteArrayProps, helios.HInt | helios.HIntProps][];
     redeemer?: helios.UplcData;
-    walletAddress?: string;
-    constructor() {}
-    initialize = async (): Promise<Fixtures> =>
-    {
-        this.walletAddress = await getAddressAtDerivation(testSeedPhrase);
-        
-        // Fill out the above transaction components here
-        return this;
-    }
+    collateral?: helios.TxInput;
 }
 
 export const convertJsontoCbor = (json: any): Promise<string> => {

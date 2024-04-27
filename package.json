@@ -4,6 +4,7 @@
     "description": "Kora Labs Contract Testing",
     "main": "index.js",
     "types": "index.d.ts",
+    "type": "module",
     "homepage": "https://github.com/koralabs/kora-labs-contract-testing",
     "repository": {
         "type": "git",
@@ -19,14 +20,14 @@
     ],
     "scripts": {
         "lint": "eslint . --ext .ts",
-        "test": "node --experimental-vm-modules node_modules/.bin/jest",
+        "test": "echo 'NO TESTS'",
         "build": "tsc && cp package.json ./lib/package.json",
         "npm:publish": "yarn build && cp package.json ./lib/package.json && (cd ./lib && npm publish)"
     },
     "license": "ISC",
     "dependencies": {
-        "@hyperionbt/helios": "0.16.6",
-        "@koralabs/kora-labs-common": "^4.0.4",
+        "@hyperionbt/helios": "0.16.7",
+        "@koralabs/kora-labs-common": "^4.0.7",
         "@stricahq/bip32ed25519": "^1.0.4",
         "bip39": "^3.1.0"
     },

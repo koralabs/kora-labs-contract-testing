@@ -1,7 +1,7 @@
 import fs from "fs";
 import * as helios from '@hyperionbt/helios'
 import { ContractTester, Test } from './contractTester';
-import { Fixtures } from './fixtures';
+import { Fixtures, getAddressAtDerivation } from './fixtures';
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 
 const runTests = async (file: string) => {
@@ -10,9 +10,8 @@ const runTests = async (file: string) => {
     //const contract = program.compile();
 
     let fixtures = new Fixtures();
-    await fixtures.initialize();
-
-    const tester = new ContractTester(fixtures.walletAddress);
+    const walletAddress = await getAddressAtDerivation(0);
+    const tester = new ContractTester(walletAddress);
     await tester.init();
     
     Promise.all([

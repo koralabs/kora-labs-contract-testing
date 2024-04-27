@@ -347,10 +347,10 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-2.0.3.tgz"
   integrity sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==
 
-"@hyperionbt/helios@0.16.6":
-  version "0.16.6"
-  resolved "https://registry.npmjs.org/@hyperionbt/helios/-/helios-0.16.6.tgz"
-  integrity sha512-Cwk5kbZog4qmTT83AMkM20j3n3sf1zTHw2o9zt+YqDh8EHU3j4PXSKpTQnApK+iAhZLllw3nqh3LQDKDCfIKIw==
+"@hyperionbt/helios@0.16.7":
+  version "0.16.7"
+  resolved "https://registry.yarnpkg.com/@hyperionbt/helios/-/helios-0.16.7.tgz#3254c25ae50226c2992f03b18f4140c06ee50146"
+  integrity sha512-ysPaF0OCY0NJa1mc+LXERjH71VDNGUbYrrovKUHJv1v+eS1WJhKmxSHWh9sVa6b+sYoXdKwoCR20UQhzCF5jzA==
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
@@ -593,10 +593,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@koralabs/kora-labs-common@^4.0.4":
-  version "4.0.4"
-  resolved "https://npm.pkg.github.com/download/@koralabs/kora-labs-common/4.0.4/5278543d0168f20cff9c5592ac3d934ba1f50aac#5278543d0168f20cff9c5592ac3d934ba1f50aac"
-  integrity sha512-uoQr6lPvhmkoi9vNNcFsUHcDeqfk22THZ5mXmCNFwtkgwdd18gEUhJ3V3BTAdeNxgwSOHaB5X83Pu+2qrX6fXQ==
+"@koralabs/kora-labs-common@^4.0.7":
+  version "4.0.7"
+  resolved "https://npm.pkg.github.com/download/@koralabs/kora-labs-common/4.0.7/c99bce46a81fac78e9467afae4e0448d4f5ff5dc#c99bce46a81fac78e9467afae4e0448d4f5ff5dc"
+  integrity sha512-5MX04WGF7oNtw6fsn564TAxWzAvb1REecxnUNu4bwwIYH+33FYGTnYxESpuj2UWp+Wbcpzx9f1h9Nn8V7taM3A==
   dependencies:
     boolean "^3.2.0"
     cbor "^9.0.2"

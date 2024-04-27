@@ -12,6 +12,7 @@ export class Test {
   signatories?: helios.PubKeyHash[];
   minted?: [helios.ByteArray | helios.ByteArrayProps, helios.HInt | helios.HIntProps][];
   redeemer?: helios.UplcData;
+  collateral?: helios.TxInput;
   
   constructor (script: helios.Program, fixtures: () => Fixtures, setupTx?: () => helios.Tx, optimizedCompile = false) {
     this.script = script.compile(optimizedCompile); // We have to compile again for each test due to shared console logging.
@@ -24,6 +25,7 @@ export class Test {
       this.signatories = fixture.signatories;
       this.minted = fixture.minted;
       this.redeemer = fixture.redeemer;
+      this.collateral = fixture.collateral;
     }        
   }
 
@@ -31,7 +33,7 @@ export class Test {
 
   build() {
     if (this.inputs)
-        this.inputs.forEach((input, index) => this.tx.addInput(input, index == (this.inputs?.length ?? 0) - 1 && !this.minted ? this.redeemer : undefined));
+        this.inputs.forEach((input, index) => this.tx.addInput(input, (index == ((this.inputs?.length ?? 0) - 1) && this.redeemer) ? this.redeemer : undefined));
 
     if (this.refInputs)
       this.refInputs.forEach((input) => this.tx.addRefInput(input));
@@ -47,6 +49,9 @@ export class Test {
     if (this.signatories)
       this.signatories.forEach((signer) => this.tx.addSigner(signer));
 
+    if (this.collateral)
+      this.tx.addCollateral(this.collateral);
+
     return this.tx;
   }
 }
@@ -58,13 +63,15 @@ export class ContractTester {
     testCount = 0;
     testName: string | undefined;
     groupName: string | undefined;
-    changeAddress: string;
+    changeAddress: helios.Address;
+    verbose = false;
   
-    constructor (changeAddress?: string) {
+    constructor (changeAddress?: helios.Address, verbose = false) {
       if (!changeAddress) {
         throw new Error("changeAddress is required")
       }
       this.changeAddress = changeAddress;
+      this.verbose = verbose;
     }
 
     async init (groupName?: string, testName?: string) {
@@ -87,13 +94,15 @@ export class ContractTester {
               this.testCount++;
               let tx = test.build();
               try {
-                await tx.finalize(this.networkParams ?? {}, helios.Address.fromBech32(this.changeAddress));
+                await tx.finalize(this.networkParams ?? {}, this.changeAddress);
                 //console.log(JSON.stringify(tx?.dump()));
                 // SUCCESS
                 this.logTest(tx, shouldApprove, group, name, message);
               }
               catch (error: any) {
-                //console.log(JSON.stringify(tx.dump()));
+                if (this.verbose) {
+                  console.log(JSON.stringify(tx.dump()));
+                }
                 this.logTest(tx, shouldApprove, group, name, message, error);
               }
             }
