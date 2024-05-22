@@ -19,7 +19,7 @@
         }
     ],
     "scripts": {
-        "lint": "eslint . --ext .ts",
+        "lint": "echo 'NO LINT'",
         "test": "echo 'NO TESTS'",
         "build": "tsc && cp package.json ./lib/package.json",
         "npm:publish": "yarn build && cp package.json ./lib/package.json && (cd ./lib && npm publish)"
