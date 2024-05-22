@@ -1,4 +1,4 @@
-import * as helios from '@hyperionbt/helios'
+import * as helios from '@koralabs/helios'
 import * as https from 'https'
 import { mnemonicToEntropy } from 'bip39';
 import bip32 from '@stricahq/bip32ed25519';
@@ -46,7 +46,8 @@ export const convertJsontoCbor = (json: any): Promise<string> => {
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': postData.length,
-            'Accept': 'text/plain'
+            'Accept': 'text/plain',
+            'api-key': `${process.env.HANDLE_ME_API_KEY ?? ''}`
             }
         };
         let data = '';

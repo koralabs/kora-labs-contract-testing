@@ -1,4 +1,4 @@
-import * as helios from '@hyperionbt/helios'
+import * as helios from '@koralabs/helios'
 import { Fixtures } from './fixtures.js'
 import { Color } from './colors.js';
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
@@ -13,12 +13,19 @@ export class Test {
   minted?: [helios.ByteArray | helios.ByteArrayProps, helios.HInt | helios.HIntProps][];
   redeemer?: helios.UplcData;
   collateral?: helios.TxInput;
+  fixture: CallableFunction;
   
-  constructor (script: helios.Program, fixtures: () => Fixtures, setupTx?: () => helios.Tx, optimizedCompile = false) {
+  constructor (script: helios.Program, fixtures: () => Fixtures | Promise<Fixtures>, setupTx?: () => helios.Tx, optimizedCompile = false) {
     this.script = script.compile(optimizedCompile); // We have to compile again for each test due to shared console logging.
     this.tx = setupTx ? setupTx() : new helios.Tx();   
-    if (fixtures){
-      const fixture = fixtures();
+    this.fixture = fixtures;
+  }
+
+  reset(fixtures: Fixtures | undefined) {}
+
+  async build() {
+    if (this.fixture) {
+      const fixture = await this.fixture();
       this.inputs = fixture.inputs;
       this.refInputs = fixture.refInputs;
       this.outputs = fixture.outputs;
@@ -26,12 +33,7 @@ export class Test {
       this.minted = fixture.minted;
       this.redeemer = fixture.redeemer;
       this.collateral = fixture.collateral;
-    }        
-  }
-
-  reset(fixtures: Fixtures | undefined) {}
-
-  build() {
+    }
     if (this.inputs)
         this.inputs.forEach((input, index) => this.tx.addInput(input, (index == ((this.inputs?.length ?? 0) - 1) && this.redeemer) ? this.redeemer : undefined));
 
@@ -92,7 +94,7 @@ export class ContractTester {
         if (this.groupName == null || group == this.groupName) {
             if (this.testName == null || name == this.testName) {
               this.testCount++;
-              let tx = test.build();
+              let tx = await test.build();
               try {
                 await tx.finalize(this.networkParams ?? {}, this.changeAddress);
                 //console.log(JSON.stringify(tx?.dump()));

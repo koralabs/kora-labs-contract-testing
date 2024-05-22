@@ -1,5 +1,5 @@
 import fs from "fs";
-import * as helios from '@hyperionbt/helios'
+import * as helios from '@koralabs/helios'
 import { ContractTester, Test } from './contractTester';
 import { Fixtures, getAddressAtDerivation } from './fixtures';
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
