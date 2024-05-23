@@ -1,5 +1,5 @@
 import * as helios from '@koralabs/helios'
-import { Fixtures } from './fixtures.js'
+import { Fixtures, getAddressAtDerivation, getNewFakeUtxoId } from './fixtures.js'
 import { Color } from './colors.js';
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 
@@ -14,11 +14,15 @@ export class Test {
   redeemer?: helios.UplcData;
   collateral?: helios.TxInput;
   fixture: CallableFunction;
+  attachScript: Boolean;
+  unoptimzedScriptScbor: helios.UplcProgram;
   
-  constructor (script: helios.Program, fixtures: () => Fixtures | Promise<Fixtures>, setupTx?: () => helios.Tx, optimizedCompile = false) {
-    this.script = script.compile(optimizedCompile); // We have to compile again for each test due to shared console logging.
+  constructor (script: helios.Program, fixtures: () => Fixtures | Promise<Fixtures>, setupTx?: () => helios.Tx, attachScript = false) {
+    this.script = script.compile(true); // We have to compile again for each test due to shared console logging.
+    this.unoptimzedScriptScbor = script.compile(false)
     this.tx = setupTx ? setupTx() : new helios.Tx();   
-    this.fixture = fixtures;
+    this.fixture = fixtures;  
+    this.attachScript = attachScript;
   }
 
   reset(fixtures: Fixtures | undefined) {}
@@ -40,7 +44,19 @@ export class Test {
     if (this.refInputs)
       this.refInputs.forEach((input) => this.tx.addRefInput(input));
     
-    this.tx.attachScript(this.script)
+    if (this.attachScript) {
+      this.tx.attachScript(this.script)
+    }
+    else {
+      this.tx.addRefInput(new helios.TxInput(
+        new helios.TxOutputId(getNewFakeUtxoId()),
+        new helios.TxOutput(
+            await getAddressAtDerivation(0),
+            new helios.Value(BigInt(100000000)),
+            null,
+            this.script
+        )), this.script)
+    }
     
     if (this.minted)
       this.tx.mintTokens(this.script.mintingPolicyHash, this.minted, this.redeemer ?? null);
@@ -91,24 +107,39 @@ export class ContractTester {
     }
 
     async test(group: string, name: string, test: Test, shouldApprove = true, message?:string) {
-        if (this.groupName == null || group == this.groupName) {
-            if (this.testName == null || name == this.testName) {
-              this.testCount++;
-              let tx = await test.build();
-              try {
-                await tx.finalize(this.networkParams ?? {}, this.changeAddress);
-                //console.log(JSON.stringify(tx?.dump()));
-                // SUCCESS
-                this.logTest(tx, shouldApprove, group, name, message);
-              }
-              catch (error: any) {
-                if (this.verbose) {
-                  console.log(JSON.stringify(tx.dump()));
-                }
-                this.logTest(tx, shouldApprove, group, name, message, error);
-              }
+      if (this.groupName == null || group == this.groupName) {
+          if (this.testName == null || name == this.testName) {
+            this.testCount++;
+            let tx = await test.build();
+            try {
+              await tx.finalize(this.networkParams ?? {}, this.changeAddress);
+              //console.log(JSON.stringify(tx?.dump()));
+              // SUCCESS
+              this.logTest(tx, shouldApprove, group, name, message);
             }
-        }
+            catch (error: any) {
+              if (this.verbose) {
+                console.log(JSON.stringify(tx.dump()));
+              }
+              if (error.context) {
+                  const { context } = error;
+                  const args = [helios.UplcData.fromCbor(context.Redeemer), helios.UplcData.fromCbor(context.ScriptContext)];        
+                  if ('Datum' in context) {
+                      args.unshift(helios.UplcData.fromCbor(context.Datum));
+                  }
+                  try {
+                      const uplcProgram = test.unoptimzedScriptScbor;
+                      const res = await uplcProgram.run(args.map((a) => new helios.UplcDataValue(helios.Site.dummy(), a)));
+                      this.logTest(tx, shouldApprove, group, name, message, res);
+                  } catch (runProgramError) {
+                      runProgramError.message = `Error running program: ${runProgramError.message} with error ${error.message}`;
+                      console.log(runProgramError);
+                  }
+              }
+              this.logTest(tx, shouldApprove, group, name, message, error);
+            }
+          }
+      }
     }
     
     logTest(tx: helios.Tx, shouldApprove: boolean, group: string, test: string, message?: string, error?: any) {
