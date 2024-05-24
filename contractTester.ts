@@ -131,9 +131,11 @@ export class ContractTester {
                       const uplcProgram = test.unoptimzedScriptScbor;
                       const res = await uplcProgram.run(args.map((a) => new helios.UplcDataValue(helios.Site.dummy(), a)));
                       this.logTest(tx, shouldApprove, group, name, message, res);
+                      return;
                   } catch (runProgramError) {
                       runProgramError.message = `Error running program: ${runProgramError.message} with error ${error.message}`;
                       console.log(runProgramError);
+                      return;
                   }
               }
               this.logTest(tx, shouldApprove, group, name, message, error);
@@ -154,7 +156,7 @@ export class ContractTester {
       
       const mem = `mem:${tx.witnesses.redeemers.reduce((n, r) => {return n + r.memCost}, BigInt(0))}`;
       const cpu = `cpu:${tx.witnesses.redeemers.reduce((n, r) => {return n + r.cpuCost}, BigInt(0))}`;
-      const size = `size:${tx.body.toCborHex().length / 2}`;
+      const size = `size:${tx.body.toCbor().length}`;
       console.log(`${textColor}*${assertion ? "success" : "failure"}* - ${(shouldApprove ? "APPROVE" : "DENY").padEnd(7)} - ${group.padEnd(25)} '${test}'${Color.Reset} ( ${mem}, ${cpu}, ${size} )`);
       
       if (hasPrintStatements)

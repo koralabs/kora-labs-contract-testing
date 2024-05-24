@@ -1,6 +1,6 @@
 {
     "name": "@koralabs/kora-labs-contract-testing",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Kora Labs Contract Testing",
     "main": "index.js",
     "types": "index.d.ts",
