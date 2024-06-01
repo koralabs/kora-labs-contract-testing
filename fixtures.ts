@@ -33,6 +33,13 @@ export class Fixtures {
     minted?: [helios.ByteArray | helios.ByteArrayProps, helios.HInt | helios.HIntProps][];
     redeemer?: helios.UplcData;
     collateral?: helios.TxInput;
+    scriptAddress: helios.Address;
+    validatorHash: helios.ValidatorHash;
+
+    constructor(validatorHash: helios.ValidatorHash) {
+        this.scriptAddress = helios.Address.fromHash(validatorHash);
+        this.validatorHash = validatorHash;
+    }
 }
 
 export const convertJsontoCbor = (json: any): Promise<string> => {

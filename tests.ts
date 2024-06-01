@@ -9,20 +9,22 @@ const runTests = async (file: string) => {
     const program = helios.Program.new(contractFile);
     //const contract = program.compile();
 
-    let fixtures = new Fixtures();
     const walletAddress = await getAddressAtDerivation(0);
     const tester = new ContractTester(walletAddress);
     await tester.init();
     
     Promise.all([
         // SHOULD APPROVE
-        tester.test("GROUP", "example test 1", new Test(program, () => {
+        tester.test("GROUP", "example test 1", new Test(program, (hash) => {
             //custom setup of default fixtures
-            return fixtures;
+            return new Fixtures(hash);
         })),
 
         // SHOULD DENY
-        tester.test("GROUP", "example test 2", new Test(program, () => fixtures, () => {
+        tester.test("GROUP", "example test 2", new Test(program, (hash) => {
+            //custom setup of default fixtures
+            return new Fixtures(hash);
+        }, () => {
             // custom tx setup
             return new helios.Tx();
         }), false, "expected error message"),

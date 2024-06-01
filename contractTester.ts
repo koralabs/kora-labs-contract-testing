@@ -17,7 +17,7 @@ export class Test {
   attachScript: Boolean;
   unoptimzedScriptScbor: helios.UplcProgram;
   
-  constructor (script: helios.Program, fixtures: () => Fixtures | Promise<Fixtures>, setupTx?: () => helios.Tx, attachScript = false) {
+  constructor (script: helios.Program, fixtures: (hash: helios.ValidatorHash) => Fixtures | Promise<Fixtures>, setupTx?: () => helios.Tx, attachScript = false) {
     this.script = script.compile(true); // We have to compile again for each test due to shared console logging.
     this.unoptimzedScriptScbor = script.compile(false)
     this.tx = setupTx ? setupTx() : new helios.Tx();   
@@ -29,7 +29,7 @@ export class Test {
 
   async build() {
     if (this.fixture) {
-      const fixture = await this.fixture();
+      const fixture = await this.fixture(new helios.ValidatorHash(this.script.hash()));
       this.inputs = fixture.inputs;
       this.refInputs = fixture.refInputs;
       this.outputs = fixture.outputs;
