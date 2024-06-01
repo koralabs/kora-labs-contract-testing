@@ -5,7 +5,7 @@ helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 
 export class Test {
   tx: helios.Tx;
-  script: helios.UplcProgram;
+  contract: helios.Program;
   inputs?: helios.TxInput[];
   refInputs?: helios.TxInput[];
   outputs?: helios.TxOutput[];
@@ -18,9 +18,9 @@ export class Test {
   attachScript: Boolean;
   unoptimzedScriptScbor: helios.UplcProgram;
   
-  constructor (script: helios.Program, fixtures: (hash: helios.ValidatorHash) => Fixture | Promise<Fixture>, setupTx?: (fixture: Fixture) => helios.Tx, attachScript = false) {
-    this.script = script.compile(true); // We have to compile again for each test due to shared console logging.
-    this.unoptimzedScriptScbor = script.compile(false)
+  constructor (contract: helios.Program, fixtures: (hash: helios.ValidatorHash) => Fixture | Promise<Fixture>, setupTx?: (fixture: Fixture) => helios.Tx, attachScript = false) {
+    this.contract = contract;
+    this.unoptimzedScriptScbor = contract.compile(false)
     this.attachScript = attachScript;
     this.setupTx = setupTx;
     this.setupFixture = fixtures;
@@ -29,7 +29,8 @@ export class Test {
   reset(fixtures: Fixture | undefined) {}
 
   async build() {
-    const fixture = await this.setupFixture(new helios.ValidatorHash(this.script.hash()));
+    const script = this.contract.compile(true);
+    const fixture = await this.setupFixture(new helios.ValidatorHash(script.hash()));
     this.inputs = fixture.inputs;
     this.refInputs = fixture.refInputs;
     this.outputs = fixture.outputs;
@@ -45,7 +46,7 @@ export class Test {
       this.refInputs.forEach((input) => this.tx.addRefInput(input));
     
     if (this.attachScript) {
-      this.tx.attachScript(this.script)
+      this.tx.attachScript(script)
     }
     else {
       this.tx.addRefInput(new helios.TxInput(
@@ -54,12 +55,12 @@ export class Test {
             await getAddressAtDerivation(0),
             new helios.Value(BigInt(100000000)),
             null,
-            this.script
-        )), this.script)
+            script
+        )), script)
     }
     
     if (this.minted)
-      this.tx.mintTokens(this.script.mintingPolicyHash, this.minted, this.redeemer ?? null);
+      this.tx.mintTokens(script.mintingPolicyHash, this.minted, this.redeemer ?? null);
     
     if (this.outputs)
       this.outputs.forEach((output) => this.tx.addOutput(output));
@@ -128,7 +129,7 @@ export class ContractTester {
                       args.unshift(helios.UplcData.fromCbor(context.Datum));
                   }
                   try {
-                      const uplcProgram = test.unoptimzedScriptScbor;
+                      const uplcProgram = test.contract.compile(false);
                       const res = await uplcProgram.run(args.map((a) => new helios.UplcDataValue(helios.Site.dummy(), a)));
                       this.logTest(tx, shouldApprove, group, name, message, res);
                       return;
