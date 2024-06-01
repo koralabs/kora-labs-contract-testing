@@ -25,7 +25,7 @@ export const getAddressAtDerivation = async (derivation: number = 0) => {
 
 export const testSeedPhrase = ['hurdle', 'exile', 'essence', 'fitness', 'winter', 'unaware', 'coil', 'polar', 'vocal', 'like', 'tuition', 'story', 'consider', 'weasel', 'shove', 'donkey', 'effort', 'nice', 'any', 'buffalo', 'trip', 'amount', 'hundred', 'duty'];
 
-export class Fixtures {
+export class Fixture {
     inputs?: helios.TxInput[];
     refInputs?: helios.TxInput[];
     outputs?: helios.TxOutput[];

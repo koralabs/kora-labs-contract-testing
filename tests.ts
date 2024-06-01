@@ -1,7 +1,7 @@
 import fs from "fs";
 import * as helios from '@koralabs/helios'
 import { ContractTester, Test } from './contractTester';
-import { Fixtures, getAddressAtDerivation } from './fixtures';
+import { Fixture, getAddressAtDerivation } from './fixtures';
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 
 const runTests = async (file: string) => {
@@ -17,13 +17,13 @@ const runTests = async (file: string) => {
         // SHOULD APPROVE
         tester.test("GROUP", "example test 1", new Test(program, (hash) => {
             //custom setup of default fixtures
-            return new Fixtures(hash);
+            return new Fixture(hash);
         })),
 
         // SHOULD DENY
         tester.test("GROUP", "example test 2", new Test(program, (hash) => {
             //custom setup of default fixtures
-            return new Fixtures(hash);
+            return new Fixture(hash);
         }, () => {
             // custom tx setup
             return new helios.Tx();

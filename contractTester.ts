@@ -1,5 +1,5 @@
 import * as helios from '@koralabs/helios'
-import { Fixtures, getAddressAtDerivation, getNewFakeUtxoId } from './fixtures.js'
+import { Fixture, getAddressAtDerivation, getNewFakeUtxoId } from './fixtures.js'
 import { Color } from './colors.js';
 helios.config.set({ IS_TESTNET: false, AUTO_SET_VALIDITY_RANGE: true });
 
@@ -13,31 +13,31 @@ export class Test {
   minted?: [helios.ByteArray | helios.ByteArrayProps, helios.HInt | helios.HIntProps][];
   redeemer?: helios.UplcData;
   collateral?: helios.TxInput;
-  fixture: CallableFunction;
+  setupFixture: CallableFunction;
+  setupTx?: CallableFunction;
   attachScript: Boolean;
   unoptimzedScriptScbor: helios.UplcProgram;
   
-  constructor (script: helios.Program, fixtures: (hash: helios.ValidatorHash) => Fixtures | Promise<Fixtures>, setupTx?: () => helios.Tx, attachScript = false) {
+  constructor (script: helios.Program, fixtures: (hash: helios.ValidatorHash) => Fixture | Promise<Fixture>, setupTx?: (fixture: Fixture) => helios.Tx, attachScript = false) {
     this.script = script.compile(true); // We have to compile again for each test due to shared console logging.
     this.unoptimzedScriptScbor = script.compile(false)
-    this.tx = setupTx ? setupTx() : new helios.Tx();   
-    this.fixture = fixtures;  
     this.attachScript = attachScript;
+    this.setupTx = setupTx;
+    this.setupFixture = fixtures;
   }
 
-  reset(fixtures: Fixtures | undefined) {}
+  reset(fixtures: Fixture | undefined) {}
 
   async build() {
-    if (this.fixture) {
-      const fixture = await this.fixture(new helios.ValidatorHash(this.script.hash()));
-      this.inputs = fixture.inputs;
-      this.refInputs = fixture.refInputs;
-      this.outputs = fixture.outputs;
-      this.signatories = fixture.signatories;
-      this.minted = fixture.minted;
-      this.redeemer = fixture.redeemer;
-      this.collateral = fixture.collateral;
-    }
+    const fixture = await this.setupFixture(new helios.ValidatorHash(this.script.hash()));
+    this.inputs = fixture.inputs;
+    this.refInputs = fixture.refInputs;
+    this.outputs = fixture.outputs;
+    this.signatories = fixture.signatories;
+    this.minted = fixture.minted;
+    this.redeemer = fixture.redeemer;
+    this.collateral = fixture.collateral;
+    this.tx = this.setupTx ? this.setupTx(fixture) : new helios.Tx(); 
     if (this.inputs)
         this.inputs.forEach((input, index) => this.tx.addInput(input, (index == ((this.inputs?.length ?? 0) - 1) && this.redeemer) ? this.redeemer : undefined));
 
