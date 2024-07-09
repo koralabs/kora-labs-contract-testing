@@ -36,7 +36,7 @@ export class Fixture {
     scriptAddress: helios.Address;
     validatorHash: helios.ValidatorHash;
 
-    constructor(validatorHash: helios.ValidatorHash) {
+    constructor(validatorHash: helios.ValidatorHash | helios.MintingPolicyHash) {
         this.scriptAddress = helios.Address.fromHash(validatorHash);
         this.validatorHash = validatorHash;
     }
