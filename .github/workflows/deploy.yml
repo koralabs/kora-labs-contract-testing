@@ -1,10 +1,25 @@
 name: kora-labs-contract-testing
 on:
+  workflow_dispatch:
+    inputs:
+      expected_head:
+        description: Reviewed exact maintenance commit SHA
+        required: true
+        type: string
   push:
     branches:
       - master
+    paths-ignore:
+      - .github/workflows/deploy.yml
+      - .github/workflows/release-tooling-tests.yml
+      - scripts/release-receipt.cjs
+      - scripts/capture-release-tags.cjs
+      - .gitignore
+      - test/release-receipt.test.cjs
 jobs:
   deploy:
+    # Dispatch on the reviewed maintenance ref uses its package-local workflow, never master's graph.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/maintenance/harness-0.0.7-20261021'
     name: Deploying from ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
