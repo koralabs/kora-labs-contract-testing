@@ -1,5 +1,6 @@
 name: kora-labs-contract-testing
 on:
+  workflow_dispatch:
   push:
     branches:
       - master

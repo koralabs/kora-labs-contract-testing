@@ -1,0 +1,25 @@
+name: Contract harness maintenance tests
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: read
+jobs:
+  test:
+    name: Build and real harness regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@koralabs'
+      - name: Install exact dependency graph
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile
+      - name: Build and test actual harness source
+        run: npm test

@@ -40,7 +40,7 @@ export class Test {
     this.collateral = fixture.collateral;
     this.tx = this.setupTx ? this.setupTx(fixture) : new helios.Tx(); 
     if (this.inputs)
-        this.inputs.forEach((input, index) => this.tx.addInput(input, (index == ((this.inputs?.length ?? 0) - 1) && this.redeemer) ? this.redeemer : undefined));
+        this.inputs.forEach(input => this.tx.addInput(input, input.origOutput?.address.validatorHash ? this.redeemer : undefined));
 
     if (this.refInputs)
       this.refInputs.forEach((input) => this.tx.addRefInput(input));
