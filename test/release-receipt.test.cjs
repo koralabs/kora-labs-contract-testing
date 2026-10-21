@@ -1,7 +1,10 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawn } = require('node:child_process');
+const { createServer } = require('node:http');
+const { mkdirSync, mkdtempSync, writeFileSync, rmSync } = require('node:fs');
+const { join, resolve } = require('node:path');
 const { verifyReceipt } = require('../scripts/release-receipt.cjs');
 
 function receipt() {
@@ -45,4 +48,58 @@ test('npm subprocess inherits the maintenance tag configuration', () => {
         encoding: 'utf8', env: { ...process.env, NPM_CONFIG_TAG: 'maintenance' }
     }).trim();
     assert.equal(tag, 'maintenance');
+});
+
+// Invariant: first publication captures latest even when maintenance does not exist.
+// Real npm + local HTTP registry are the system under test; only the registry boundary is synthetic.
+// Negative control runs the old unversioned command against the same packument and must fail.
+test('real npm captures tags before the first maintenance publication', async () => {
+    const name = '@koralabs/kora-labs-contract-testing';
+    const requests = [];
+    const tags = { latest: '0.0.9' };
+    const server = createServer((request, response) => {
+        requests.push({ method: request.method, path: decodeURIComponent(request.url) });
+        if (request.method !== 'GET' || decodeURIComponent(request.url) !== `/${name}`) {
+            response.writeHead(404).end('{}');
+            return;
+        }
+        response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({
+            name, 'dist-tags': tags,
+            versions: { '0.0.7': { name, version: '0.0.7' }, '0.0.9': { name, version: '0.0.9' } }
+        }));
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const registry = `http://127.0.0.1:${server.address().port}`;
+    const temporaryRoot = resolve(__dirname, '../tmp');
+    mkdirSync(temporaryRoot, { recursive: true });
+    const dir = mkdtempSync(join(temporaryRoot, 'harness-registry-'));
+    const config = join(dir, 'npmrc');
+    writeFileSync(config, `@koralabs:registry=${registry}\n`);
+    const env = { ...process.env, NPM_CONFIG_TAG: 'maintenance', NPM_CONFIG_USERCONFIG: config,
+        NPM_CONFIG_CACHE: join(dir, 'cache'), NPM_CONFIG_UPDATE_NOTIFIER: 'false', NPM_CONFIG_FETCH_RETRIES: '0' };
+    const run = (command, args) => new Promise((resolve, reject) => {
+        const child = spawn(command, args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
+        let stdout = '';
+        let stderr = '';
+        const timer = setTimeout(() => { child.kill(); reject(new Error('npm fixture request timed out')); }, 15_000);
+        child.stdout.on('data', chunk => { stdout += chunk; });
+        child.stderr.on('data', chunk => { stderr += chunk; });
+        child.on('error', error => { clearTimeout(timer); reject(error); });
+        child.on('close', code => { clearTimeout(timer); resolve({ code, stdout, stderr }); });
+    });
+    try {
+        const negative = await run('npm', ['view', name, 'dist-tags', '--json', '--registry', registry]);
+        assert.notEqual(negative.code, 0, 'old command must fail without a maintenance tag');
+        assert.match(negative.stderr, /No match found for version maintenance/);
+        const captured = await run(process.execPath, [resolve(__dirname, '../scripts/capture-release-tags.cjs'), registry]);
+        assert.equal(captured.code, 0, captured.stderr);
+        assert.deepEqual(JSON.parse(captured.stdout), { latest: '0.0.9' });
+        assert.deepEqual(tags, { latest: '0.0.9' });
+        assert(requests.length >= 2);
+        assert(requests.every(r => r.method === 'GET' && r.path === `/${name}`));
+    } finally {
+        server.closeAllConnections();
+        await new Promise(resolve => server.close(resolve));
+        rmSync(dir, { recursive: true, force: true });
+    }
 });

@@ -13,6 +13,8 @@ on:
       - .github/workflows/deploy.yml
       - .github/workflows/release-tooling-tests.yml
       - scripts/release-receipt.cjs
+      - scripts/capture-release-tags.cjs
+      - .gitignore
       - test/release-receipt.test.cjs
 jobs:
   deploy:
