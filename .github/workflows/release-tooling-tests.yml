@@ -1,0 +1,16 @@
+name: Release tooling tests
+on:
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  test:
+    name: Release identity and npm tag behavior
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --test test/release-receipt.test.cjs
