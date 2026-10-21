@@ -1,27 +1,83 @@
-name: kora-labs-contract-testing
+name: Contract harness compatibility release
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      expected_head:
+        description: Reviewed exact maintenance commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+  packages: write
+env:
+  NPM_CONFIG_TAG: maintenance
+concurrency:
+  group: contract-harness-0.0.10-publication
+  cancel-in-progress: false
 jobs:
-  deploy:
-    name: Deploying from ${{ github.ref_name }}
+  publish:
+    if: github.ref == 'refs/heads/maintenance/harness-0.0.7-20261021'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v1
-
-    - name: Publish ${{ github.workflow }}
-      id: publish
-      env:
-        DEPLOYMENT_ACCESS_TOKEN: ${{ secrets.DEPLOYMENT_ACCESS_TOKEN }}
-        SECRETS_CONTEXT: ${{ toJson(secrets) }}
-        VARS_CONTEXT: ${{ toJson(vars) }}
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-        DEPLOYMENT_TYPE: npm-publish
-        NODE_VERSION: 20
-        IS_PUBLIC: true
-      run: |
-        set -eu
-        curl -H "Authorization: Bearer ${DEPLOYMENT_ACCESS_TOKEN}" https://raw.githubusercontent.com/koralabs/adahandle-deployments/master/common/main.sh -o main.sh
-        chmod +x main.sh && ./main.sh
+      - uses: actions/checkout@v4
+      - name: Verify reviewed source and toolchain identity
+        env:
+          EXPECTED_HEAD: ${{ inputs.expected_head }}
+        run: |
+          set -eu
+          test "$GITHUB_REF" = 'refs/heads/maintenance/harness-0.0.7-20261021'
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          node -e 'const p=require("./package.json"); if(p.name!=="@koralabs/kora-labs-contract-testing" || p.version!=="0.0.10" || p.dependencies["@koralabs/helios"]!=="0.16.8-1") throw Error("Unreviewed release identity/toolchain");'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@koralabs'
+      - name: Install reviewed frozen graph
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(npm config get tag)" = maintenance
+          npx --yes yarn@1.22.22 install --frozen-lockfile
+          git diff --exit-code -- package.json yarn.lock
+      - name: Capture existing tags before building or publishing
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p tmp/release
+          node scripts/capture-release-tags.cjs https://npm.pkg.github.com > tmp/release/tags-before.json
+      - name: Build and test the output to publish
+        run: npm test
+      - name: Pack tested output without rebuilding
+        run: |
+          # A tarball publish cannot infer gitHead from a package directory. Stamp only the
+          # actual checked-out source identity into metadata; tested JS is never rebuilt.
+          node -e 'const fs=require("node:fs"); const p=JSON.parse(fs.readFileSync("lib/package.json")); p.gitHead=process.env.GITHUB_SHA; fs.writeFileSync("lib/package.json",JSON.stringify(p,null,4)+"\n");'
+          npm pack ./lib --ignore-scripts --pack-destination tmp/release --json > tmp/release/pack.json
+          node -e 'const fs=require("node:fs"); const [p]=JSON.parse(fs.readFileSync("tmp/release/pack.json")); if(p.name!=="@koralabs/kora-labs-contract-testing" || p.version!=="0.0.10") throw Error("Unexpected packed identity"); fs.writeFileSync("tmp/release/archive-path", "tmp/release/"+p.filename);'
+          sha512sum "$(cat tmp/release/archive-path)" > tmp/release/archive.sha512
+          git rev-parse HEAD > tmp/release/source-head
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contract-harness-0.0.10-tested-publication
+          path: tmp/release/
+      - name: Publish the tested immutable archive to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: npm publish "$(cat tmp/release/archive-path)" --registry https://npm.pkg.github.com --ignore-scripts --tag maintenance
+      - name: Verify registry identity, bytes and tags
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/capture-release-tags.cjs https://npm.pkg.github.com > tmp/release/tags-after.json
+          npm view @koralabs/kora-labs-contract-testing@0.0.10 --json --registry https://npm.pkg.github.com > tmp/release/metadata.json
+          node scripts/release-receipt.cjs
+          mkdir -p tmp/registry
+          npm pack @koralabs/kora-labs-contract-testing@0.0.10 --ignore-scripts --pack-destination tmp/registry --registry https://npm.pkg.github.com --json > tmp/registry/pack.json
+          cmp "$(cat tmp/release/archive-path)" "tmp/registry/$(node -p 'JSON.parse(require("node:fs").readFileSync("tmp/registry/pack.json"))[0].filename')"
+      - name: Retain registry verification receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-harness-0.0.10-registry-receipt
+          path: tmp/release/
