@@ -1,6 +1,6 @@
 # Proposed 0.0.10 compatibility maintenance release
 
-Status: review candidate only. Do not merge or publish until the exact release path/head is reviewed. This does not repair or accept current master’s unavailable Helios 0.16.8-2 dependency.
+Status: review candidate only. The PR targets `maintenance/harness-0.0.7-20261021`, rooted at the published source, not master. Do not merge or publish until the exact release path/head is reviewed. This does not repair or accept current master’s unavailable Helios 0.16.8-2 dependency.
 
 ## Source and compiler boundary
 
