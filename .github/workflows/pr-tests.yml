@@ -1,4 +1,4 @@
-name: PR Tests
+name: PR Typecheck
 on:
   pull_request:
   workflow_dispatch:
@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   pr-tests:
-    name: Lint, build and unit tests
+    name: Typecheck harness
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
