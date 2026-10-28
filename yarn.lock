@@ -590,7 +590,7 @@
 
 "@koralabs/helios@0.16.8-2":
   version "0.16.8-2"
-  resolved "https://registry.npmjs.org/@koralabs/helios/-/helios-0.16.8-2.tgz"
+  resolved "file:./vendor/koralabs-helios-0.16.8-2.tgz#c3ae86c102254a8dbef609c48b9d91c974236ed1"
   integrity sha512-qAKs3PgZye+vjWM9bZVgqVVJgA3CruVeDoFn6xAoH3us7seofSei3N1364bKTsYHTz+hEtMRcYU4GEtceaJs1A==
 
 "@koralabs/kora-labs-common@^4.0.7":
