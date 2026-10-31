@@ -1,0 +1,15 @@
+# Exact repo-root-relative paths, one per line. Changes to these need operator review.
+# Why each: CANONICAL_CONTRACT.md.
+.enclave
+CANONICAL_CONTRACT.md
+# Pinned compiler (invariant 1)
+package.json
+yarn.lock
+vendor/koralabs-helios-0.16.8-2.tgz
+scripts/reproduce-helios-0.16.8-2.sh
+test/locked-compiler.test.mjs
+# Pass/fail judgement of contract tests (invariant 2)
+contractTester.ts
+test/contractTester.test.mjs
+# Publishing path (invariant 3)
+.github/workflows/deploy.yml
