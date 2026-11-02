@@ -6,7 +6,7 @@ I am the legacy test harness that runs Helios smart-contract validators against 
 
 ## Invariants
 
-1. **The compiler is exactly `@koralabs/helios` 0.16.8-2, byte for byte.** `yarn.lock` keeps the original sha512 integrity; the vendored archive satisfies it; the installed `helios.js` equals the archive's. No other compiler build may stand in. Enforced by `test/locked-compiler.test.mjs`.
+1. **The compiler is exactly `@koralabs/helios` 0.16.8-2, byte for byte.** `package-lock.json` keeps the original sha512 integrity; the vendored archive satisfies it; the installed `helios.js` equals the archive's. No other compiler build may stand in. Enforced by `test/locked-compiler.test.mjs`.
 2. **A test counts as success only when the validator's actual result matches the expectation** (APPROVE test must approve, DENY test must deny). A throw while building the transaction is never a pass. A failed test increments `failCount`. Enforced in part by `test/contractTester.test.mjs`.
 3. **Publishing happens only through `.github/workflows/deploy.yml`** (master push or a manual dispatch naming the reviewed commit). A release is an operator decision.
 4. **No secrets or real wallets in the repo.** Fixtures use fake addresses and generated UTxO ids only.

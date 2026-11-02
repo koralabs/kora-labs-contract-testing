@@ -1,6 +1,6 @@
 # @koralabs/helios 0.16.8-2 provenance
 
-`package.json` depends on `@koralabs/helios` `0.16.8-2`. `yarn.lock` has pinned it since commit `964da4d` (2024-07-09) with integrity
+`package.json` depends on `@koralabs/helios` `0.16.8-2`. the lockfile (`yarn.lock`, converted to `package-lock.json` with the same versions and integrity) has pinned it since commit `964da4d` (2024-07-09) with integrity
 `sha512-qAKs3PgZye+vjWM9bZVgqVVJgA3CruVeDoFn6xAoH3us7seofSei3N1364bKTsYHTz+hEtMRcYU4GEtceaJs1A==`.
 
 ## Where it came from
@@ -13,10 +13,10 @@
 ## How this repo uses it
 
 - `vendor/koralabs-helios-0.16.8-2.tgz` is the rebuilt archive. `scripts/reproduce-helios-0.16.8-2.sh` rebuilds it from `13aa1eb` and fails unless the sha512 matches.
-- In `yarn.lock` only the `resolved` field changed, to that file. The original `integrity` is kept, and Yarn checks it on install (a different archive fails with `Integrity check failed`). The declared dependency in `package.json` is unchanged.
+- In the lockfile only the `resolved` field changed, to that file. The original `integrity` is kept, and npm checks it on install (a different archive fails with an integrity error). The declared dependency in `package.json` is unchanged.
 - `test/locked-compiler.test.mjs` checks the archive against the locked sha512/sha1 and checks that the installed `helios.js` is byte-identical to it.
 
 ## Still open
 
 - **Consumers:** published `0.0.8` and `0.0.9` declare `@koralabs/helios@0.16.8-2`, which no registry serves, so consumers cannot install them. To fix that, publish this exact archive (same sha512) to GitHub Packages next to `0.16.8-1`. That is a release decision and has not been done.
-- **The shared `npm-publish` deploy path** runs plain `npm install`, which ignores `yarn.lock`. It would still 404 until the archive is published. The `deploy.yml` workflow is currently disabled.
+- **The shared `npm-publish` deploy path** runs plain `npm install`, which resolves `@koralabs/helios@0.16.8-2` from the registry unless the lock is honored. It could still 404 until the archive is published. The `deploy.yml` workflow is currently disabled.
