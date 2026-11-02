@@ -10,11 +10,13 @@ const ORIGINAL_INTEGRITY = 'sha512-qAKs3PgZye+vjWM9bZVgqVVJgA3CruVeDoFn6xAoH3us7
 const root = new URL('../', import.meta.url);
 const archive = readFileSync(new URL('vendor/koralabs-helios-0.16.8-2.tgz', root));
 
+// npm lockfiles carry no sha1 (yarn's resolved fragment did); this is the sha1 yarn.lock recorded for the archive.
+const ORIGINAL_SHA1 = 'c3ae86c102254a8dbef609c48b9d91c974236ed1';
+
 function lockEntry() {
-    const lock = readFileSync(new URL('yarn.lock', root), 'utf8');
-    const match = lock.match(/^"@koralabs\/helios@0\.16\.8-2":\n((?: {2}.*\n)+)/m);
-    assert(match, 'yarn.lock has no @koralabs/helios@0.16.8-2 entry');
-    return Object.fromEntries(match[1].trim().split('\n').map(l => l.trim().match(/^(\S+) "?([^"]*)"?$/).slice(1)));
+    const entry = JSON.parse(readFileSync(new URL('package-lock.json', root), 'utf8')).packages['node_modules/@koralabs/helios'];
+    assert(entry, 'package-lock.json has no @koralabs/helios 0.16.8-2 entry');
+    return entry;
 }
 
 // Reads one file out of an npm tarball (ustar, gzip) without extracting to disk.
@@ -36,10 +38,9 @@ test('vendored archive matches the original locked sha512 and the resolved sha1'
     const entry = lockEntry();
     assert.equal(entry.version, '0.16.8-2');
     assert.equal(entry.integrity, ORIGINAL_INTEGRITY);
-    const [path, sha1] = entry.resolved.split('#');
-    assert.equal(path, 'file:./vendor/koralabs-helios-0.16.8-2.tgz');
+    assert.equal(entry.resolved, 'file:vendor/koralabs-helios-0.16.8-2.tgz');
     assert.equal(`sha512-${createHash('sha512').update(archive).digest('base64')}`, ORIGINAL_INTEGRITY);
-    assert.equal(createHash('sha1').update(archive).digest('hex'), sha1);
+    assert.equal(createHash('sha1').update(archive).digest('hex'), ORIGINAL_SHA1);
 });
 
 // Invariant: the compiler the harness imports is exactly the locked archive, not a cached or substituted build.

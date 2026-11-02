@@ -4,7 +4,7 @@
 CANONICAL_CONTRACT.md
 # Pinned compiler (invariant 1)
 package.json
-yarn.lock
+package-lock.json
 vendor/koralabs-helios-0.16.8-2.tgz
 scripts/reproduce-helios-0.16.8-2.sh
 test/locked-compiler.test.mjs

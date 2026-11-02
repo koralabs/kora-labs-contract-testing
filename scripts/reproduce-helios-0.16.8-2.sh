@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rebuilds vendor/koralabs-helios-0.16.8-2.tgz from source and checks it against
-# the integrity locked in yarn.lock since 2024-07-09 (commit 964da4d).
+# the integrity locked in the lockfile since 2024-07-09 (commit 964da4d).
 #
 # 0.16.8-2 was published by hand from koralabs/helios with its deploy.sh
 # (jq rename to @koralabs/helios, jq version set, sed the helios.js banner,
