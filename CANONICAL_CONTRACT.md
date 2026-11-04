@@ -1,25 +1,7 @@
-# Canonical contract: kora-labs-contract-testing
+# kora-labs-contract-testing canonical contract
 
-## Purpose and authority
+The legacy harness that runs Helios smart-contract validators against fake transactions and reports approve/deny results. It holds no keys and moves no money; a wrong "pass" here can make a broken validator look safe.
 
-I am the legacy test harness that runs Helios smart-contract validators against fake transactions and reports approve/deny results. I hold no keys and move no money. But Handle contracts are judged with me, so a wrong "pass" from me can let a broken validator look safe. Edits to the contract-defining files listed in [`.enclave`](./.enclave) need operator approval before they merge. A green harness run is not proof a contract is safe on chain.
-
-## Invariants
-
-1. **The compiler is exactly `@koralabs/helios` 0.16.8-2, byte for byte.** `package-lock.json` keeps the original sha512 integrity; the vendored archive satisfies it; the installed `helios.js` equals the archive's. No other compiler build may stand in. Enforced by `test/locked-compiler.test.mjs`.
-2. **A test counts as success only when the validator's actual result matches the expectation** (APPROVE test must approve, DENY test must deny). A throw while building the transaction is never a pass. A failed test increments `failCount`. Enforced in part by `test/contractTester.test.mjs`.
-3. **Publishing happens only through `.github/workflows/deploy.yml`** (master push or a manual dispatch naming the reviewed commit). A release is an operator decision.
-4. **No secrets or real wallets in the repo.** Fixtures use fake addresses and generated UTxO ids only.
-
-## Boundaries and known limits
-
-- Offline Helios evaluation is not node execution; passing here does not authorize mint, settings or validator changes.
-- Invariants 3 and 4 have no test.
-- The repo has no lint and no suite beyond the three files in `test/`; `npm test` is a stub.
-- The pinned archive is not on any registry, so consumers cannot install published 0.0.8/0.0.9 (see `docs/helios-0.16.8-2-provenance.md`).
-
-## Refactors needed to enforce this
-
-- Publish the pinned archive to GitHub Packages so the lock is installable.
-- Add a secret-scan check for invariant 4.
-- Make `npm test` run the `test/` files instead of echoing.
+1. The compiler is exactly `@koralabs/helios` 0.16.8-2, byte for byte: the lockfile keeps the original sha512 integrity and the installed `helios.js` equals the vendored archive's. No other compiler build may stand in.
+2. A test succeeds only when the validator's actual result matches the expectation (an APPROVE test must approve, a DENY test must deny). A throw while building the transaction is never a pass, and every failed test increments `failCount`.
+3. Offline evaluation is not node execution: a pass here is not proof a contract is safe on chain.
